@@ -1,0 +1,48 @@
+import chromium from 'chrome-aws-lambda';
+
+export default async function handler(req, res) {
+  const { email, password } = req.body;  // email variable use kiya
+
+  if (!email || !password) {
+    return res.status(400).json({ error: 'Email aur password dono chahiye' });
+  }
+
+  const browser = await chromium.puppeteer.launch({
+    args: chromium.args,
+    defaultViewport: chromium.defaultViewport,
+    executablePath: await chromium.executablePath,
+    headless: chromium.headless,
+  });
+
+  try {
+    const page = await browser.newPage();
+
+    await page.goto('https://www.ivasms.com/portal/live/my_sms');
+
+    // Email field me email daalna
+    await page.type('afaquekhan839@gmail.com', email);  // yahan '#email-input' ko apni site ke field selector se replace karen
+
+    // Password field fill karna
+    await page.type('afaquekhan786', password);
+
+    // Login button click karna
+    await page.click('#login-button');
+
+    await page.waitForNavigation();
+
+    // Login successful hone ke baad aap SMS lena shuru kar sakte hain
+
+    // Example: SMS container select karna
+    const sms = await page.evaluate(() => {
+      // Modify this selector as per actual site
+      return document.querySelector('#sms-container').innerText;
+    });
+
+    res.status(200).json({ sms });
+
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  } finally {
+    await browser.close();
+  }
+}
